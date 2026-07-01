@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ActivityStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ConstraintType {
+  DRAWING
+  MATERIAL
+  LABOUR
+  EQUIPMENT
+  APPROVAL
+  RFI
+  CLIENT_DECISION
+}
+
+enum ConstraintStatus {
+  OPEN
+  CLOSED
+}
+
+model Activity {
+  id                   String         @id
+  activityName         String
+  wbsCode              String?
+  plannedStart         DateTime
+  plannedFinish        DateTime
+  actualStart          DateTime?
+  actualFinish         DateTime?
+  originalDurationDays Int
+  actualDurationDays   Int?
+  status               ActivityStatus @default(NOT_STARTED)
+  progressPercent      Int            @default(0)
+  responsibleEngineer  String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  constraints          Constraint[]
+}
+
+model Constraint {
+  id                Int              @id @default(autoincrement())
+  activityId        String
+  activity          Activity         @relation(fields: [activityId], references: [id])
+  constraintType    ConstraintType
+  description       String
+  status            ConstraintStatus @default(OPEN)
+  targetRemovalDate DateTime
+  actualRemovalDate DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}

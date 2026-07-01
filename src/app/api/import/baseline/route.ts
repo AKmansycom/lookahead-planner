@@ -1,0 +1,18 @@
+import { NextRequest, NextResponse } from "next/server";
+import { parseActivityWorkbook } from "@/lib/excel-import";
+import { importBaseline } from "@/lib/import";
+
+export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const file = formData.get("file");
+
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "Missing file" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const rows = await parseActivityWorkbook(buffer);
+  const result = await importBaseline(rows);
+
+  return NextResponse.json(result);
+}

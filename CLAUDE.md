@@ -109,3 +109,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Progress % is not present in the source data — derived from Status on import: Not Started → 0%, Completed → 100%, In Progress → 50% placeholder (correctable via the app's manual "Update progress %" feature).
 - Responsible Engineer does not exist in the source data at all — left blank on import, assigned manually in the app afterward. Document as a business assumption.
 - WBS Code is real source data not in the assignment's literal field list — kept as an extra optional column on Activity, useful for grouping/filtering.
+- Milestones (0-duration activities with only a Planned Start OR only a Planned Finish, e.g. "Signing of Contract", "Commissioning" — 2 of 861 rows in the samples) have the single available date copied into both Start and Finish on import, rather than being dropped, so they still appear in the look-ahead window and dashboard.
