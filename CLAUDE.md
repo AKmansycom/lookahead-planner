@@ -101,3 +101,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Upcoming (look-ahead) activities = activities whose Finish Date falls within the next 14 days from today.
 - PPC = (activities in the current 14-day look-ahead window with Progress % = 100) / (total activities in that window) × 100. Recalculates as the window rolls forward — it is NOT a whole-project completion ratio.
 - Constraint removal: Status (Open/Closed) plus an Actual Removal Date, set when Status flips to Closed. Lets planned vs. actual removal timing be compared.
+
+**Excel import format (confirmed from real sample files `BSL-Baseline.xlsx` / `BSL-Progress-Update.xlsx`, both Primavera P6 exports, 861 activities):**
+- Row 1 = internal Primavera field codes, Row 2 = human-readable headers, data from row 3. Columns: `task_code`/Activity ID, `status_code`/Activity Status (Not Started | In Progress | Completed), `wbs_id`/WBS Code, `task_name`/Activity Name, `target_start_date`/(*)Planned Start, `target_end_date`/(*)Planned Finish, `act_start_date`/Actual Start, `act_end_date`/Actual Finish, `target_drtn_hr_cnt`/Original Duration(d), `act_drtn_hr_cnt`/(*)Actual Duration(d), `delete_record_flag`/Delete This Row. Dates are Excel serial numbers (base 1899-12-30).
+- Two-file workflow: a **Baseline** file (defines the plan: ID, Name, WBS, Planned Start/Finish, Duration) is imported first; a **Progress Update** file (same Activity IDs, adds Status + Actual Start/Finish) is imported periodically after. Both files share identical Activity ID sets in the sample data.
+- Import behavior is **upsert by Activity ID**: re-importing a Progress Update matches existing activities by ID and updates Status/Actual dates/Progress %, without clobbering fields like Responsible Engineer that were set manually in the app.
+- Progress % is not present in the source data — derived from Status on import: Not Started → 0%, Completed → 100%, In Progress → 50% placeholder (correctable via the app's manual "Update progress %" feature).
+- Responsible Engineer does not exist in the source data at all — left blank on import, assigned manually in the app afterward. Document as a business assumption.
+- WBS Code is real source data not in the assignment's literal field list — kept as an extra optional column on Activity, useful for grouping/filtering.
