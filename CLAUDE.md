@@ -104,6 +104,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Constraint IDs are integers server-side; the UI displays them as `C-00N`.
 - Blocked/Ready activity badges are derived client-side by joining open constraints to activities (no backend change).
 
+**Bugs found and fixed during local testing:**
+- The design's `style` (base) + `style-hover` pattern used a shorthand `border` in base and longhand `border-color` in hover. React 19 warns when shorthand and longhand for the same CSS property are mixed across renders of an inline `style` object (and it renders as a full-screen blocking error overlay in Next.js dev mode — this made the UI *look* unresponsive, including blocking file-upload clicks). Fixed centrally in `src/lib/style.ts`'s `css()`: border shorthands (`border`, `border-top/right/bottom/left`) are now always expanded into `*Width`/`*Style`/`*Color` longhands, so no shorthand/longhand collision can occur anywhere in the app.
+- Import (`src/lib/import.ts`) was upserting 861 rows one at a time, fully sequentially awaited — over 2 minutes per file against the Supabase pooler, with zero loading indicator in the UI, making it look broken/frozen. Fixed by running upserts with bounded concurrency (10, matching the pg pool's default max connections) via a small `mapWithConcurrency` helper — cut it to ~14s. Also added an explicit spinner + toast while an import is in flight so it's never ambiguous whether something is happening.
+
 **Infra:** Supabase project "lookahead-planner" (region ap-northeast-1/Tokyo), org "arjun.khanna@mansycom.com's Org", project ref `fsyieeocenwsmiptllfj`. Connecting via the session-mode pooler host (`aws-0-ap-northeast-1.pooler.supabase.com:5432`), not the transaction-mode pooler (6543) — the transaction pooler isn't safe for Prisma's new driver-adapter client (`@prisma/adapter-pg`), which uses prepared statements. `DATABASE_URL` lives in the git-ignored `.env`.
 
 **Business rules (confirmed with user):**

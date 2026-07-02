@@ -35,3 +35,4 @@ input[type=date] { color-scheme: dark; }
 @keyframes drift2 { 0% { transform: translate(0,0) scale(1.05); } 100% { transform: translate(-70px,50px) scale(0.9); } }
 @keyframes drift3 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(60px,-60px) scale(1.2); } }
 @keyframes drift4 { 0% { transform: translate(0,0) scale(0.95); } 100% { transform: translate(-60px,-40px) scale(1.1); } }
+@keyframes spin { to { transform: rotate(360deg); } }

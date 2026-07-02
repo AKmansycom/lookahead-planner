@@ -75,6 +75,7 @@ export default function LookAheadApp() {
     baseline?: { name: string; count: number };
     progress?: { name: string; count: number };
   }>({});
+  const [importing, setImporting] = useState<{ baseline?: boolean; progress?: boolean }>({});
 
   const toast = useCallback((msg: string) => {
     const id = toastRef.current + 1;
@@ -205,6 +206,7 @@ export default function LookAheadApp() {
   const onImport = useCallback(
     async (kind: "baseline" | "progress", file: File | undefined) => {
       if (!file) return;
+      setImporting((prev) => ({ ...prev, [kind]: true }));
       try {
         toast(`Importing ${file.name}…`);
         const res = await api.importFile(kind, file);
@@ -213,6 +215,8 @@ export default function LookAheadApp() {
         toast(`${file.name} imported — ${res.count} activities`);
       } catch (e) {
         toast(e instanceof Error ? e.message : "Import failed");
+      } finally {
+        setImporting((prev) => ({ ...prev, [kind]: false }));
       }
     },
     [loadActivities, loadConstraints, toast]
@@ -807,7 +811,12 @@ export default function LookAheadApp() {
                 <div style={css("font-size:12.5px; color:#9aa4bf; font-weight:600;")}>Activities, WBS &amp; planned dates</div>
               </div>
             </div>
-            {bDone ? (
+            {importing.baseline ? (
+              <div style={css("display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:32px 16px; border-radius:16px; border:2px dashed rgba(124,140,255,0.35); background:rgba(124,140,255,0.06); text-align:center;")}>
+                <div style={css("width:26px; height:26px; border-radius:50%; border:3px solid rgba(124,140,255,0.25); border-top-color:#a3b0ff; animation:spin 0.8s linear infinite;")} />
+                <div style={css("font-size:13.5px; font-weight:700; color:#a3b0ff;")}>Importing — this can take up to a minute for large files…</div>
+              </div>
+            ) : bDone ? (
               <div style={css("padding:16px; border-radius:16px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.28);")}>
                 <div style={css("display:flex; align-items:center; gap:8px; font-weight:700; color:#4ade9f; font-size:14px;")}>
                   <span style={css("width:9px;height:9px;border-radius:50%;background:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.7);")} />{imports.baseline!.name}
@@ -831,7 +840,12 @@ export default function LookAheadApp() {
                 <div style={css("font-size:12.5px; color:#9aa4bf; font-weight:600;")}>Actual dates &amp; % complete</div>
               </div>
             </div>
-            {pDone ? (
+            {importing.progress ? (
+              <div style={css("display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:32px 16px; border-radius:16px; border:2px dashed rgba(244,176,74,0.4); background:rgba(244,176,74,0.07); text-align:center;")}>
+                <div style={css("width:26px; height:26px; border-radius:50%; border:3px solid rgba(244,176,74,0.25); border-top-color:#f4b04a; animation:spin 0.8s linear infinite;")} />
+                <div style={css("font-size:13.5px; font-weight:700; color:#f4b04a;")}>Importing — this can take up to a minute for large files…</div>
+              </div>
+            ) : pDone ? (
               <div style={css("padding:16px; border-radius:16px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.28);")}>
                 <div style={css("display:flex; align-items:center; gap:8px; font-weight:700; color:#4ade9f; font-size:14px;")}>
                   <span style={css("width:9px;height:9px;border-radius:50%;background:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.7);")} />{imports.progress!.name}
