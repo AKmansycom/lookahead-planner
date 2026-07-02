@@ -56,7 +56,11 @@ export default function LookAheadApp() {
   const [error, setError] = useState<string | null>(null);
 
   const [screen, setScreen] = useState<Screen>("dashboard");
-  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+  // Defaults to the 14-day look-ahead window rather than "all" — with hundreds of
+  // historical/future activities in a real import, rendering all of them on every
+  // visit to this screen is both slow (thousands of DOM nodes) and not what a site
+  // engineer doing weekly look-ahead planning needs to see first.
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("upcoming");
   const [constraintFilter, setConstraintFilter] = useState<ConstraintFilter>("open");
   const [search, setSearch] = useState("");
   const [engineerFilter, setEngineerFilter] = useState("all");
