@@ -94,6 +94,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Working style:** Building iteratively — business logic and data model first, then backend, then frontend.
 
+**Status:** Backend is built and verified end-to-end against the real sample files (Prisma schema migrated, both imports tested via the running dev server, activity/constraint updates and dashboard KPIs all confirmed correct, baseline-re-import-preserves-manual-edits guarantee confirmed). Next: frontend design via Claude Artifacts, then implementation here.
+
+**Infra:** Supabase project "lookahead-planner" (region ap-northeast-1/Tokyo), org "arjun.khanna@mansycom.com's Org", project ref `fsyieeocenwsmiptllfj`. Connecting via the session-mode pooler host (`aws-0-ap-northeast-1.pooler.supabase.com:5432`), not the transaction-mode pooler (6543) — the transaction pooler isn't safe for Prisma's new driver-adapter client (`@prisma/adapter-pg`), which uses prepared statements. `DATABASE_URL` lives in the git-ignored `.env`.
+
 **Business rules (confirmed with user):**
 - Single project, no auth — one shared dataset, no login. Multi-project/auth noted as future-scope in docs, not built.
 - Data only enters the system via Excel import; there is no separate manual "planning" input — the look-ahead window and PPC are always derived from whatever activities currently exist in the imported dataset.
