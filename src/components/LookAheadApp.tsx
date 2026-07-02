@@ -80,6 +80,8 @@ export default function LookAheadApp() {
     progress?: { name: string; count: number };
   }>({});
   const [importing, setImporting] = useState<{ baseline?: boolean; progress?: boolean }>({});
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const toast = useCallback((msg: string) => {
     const id = toastRef.current + 1;
@@ -225,6 +227,21 @@ export default function LookAheadApp() {
     },
     [loadActivities, loadConstraints, toast]
   );
+
+  const clearData = useCallback(async () => {
+    setClearing(true);
+    try {
+      const res = await api.clearAllData();
+      await Promise.all([loadActivities(), loadConstraints()]);
+      setImports({});
+      setShowClearConfirm(false);
+      toast(`Cleared ${res.deletedActivities} activities and ${res.deletedConstraints} constraints`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not clear data");
+    } finally {
+      setClearing(false);
+    }
+  }, [loadActivities, loadConstraints, toast]);
 
   // --------- derived view model ---------
   const vm = useMemo(() => {
@@ -417,6 +434,23 @@ export default function LookAheadApp() {
       </div>
 
       {showAdd && renderModal()}
+      {showClearConfirm && (
+        <div onClick={() => !clearing && setShowClearConfirm(false)} style={css("position:fixed; inset:0; z-index:80; background:rgba(4,6,14,0.6); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadein .2s ease;")}>
+          <div onClick={(e) => e.stopPropagation()} style={css("width:440px; max-width:100%; padding:28px; background:rgba(20,24,38,0.9); backdrop-filter:blur(32px) saturate(150%); -webkit-backdrop-filter:blur(32px) saturate(150%); border:1px solid rgba(255,107,99,0.3); box-shadow:0 40px 90px -30px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.1); border-radius:26px; animation:popin .25s cubic-bezier(.2,.8,.2,1);")}>
+            <div style={css("width:52px; height:52px; border-radius:15px; background:rgba(255,107,99,0.14); border:1px solid rgba(255,107,99,0.3); display:flex; align-items:center; justify-content:center; color:#ff9089; font-size:26px; margin-bottom:16px;")}>⚠</div>
+            <h2 style={css("margin:0 0 8px; font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:600; color:#f2f4fb;")}>Clear all data?</h2>
+            <p style={css("margin:0 0 22px; font-size:14px; line-height:1.55; color:#c3cbe0;")}>
+              This permanently deletes all <b style={css("color:#f2f4fb;")}>{vm.A.length}</b> activities and <b style={css("color:#f2f4fb;")}>{vm.C.length}</b> constraints. You&apos;ll need to re-import from Excel to restore the schedule. This can&apos;t be undone.
+            </p>
+            <div style={css("display:flex; gap:10px;")}>
+              <button onClick={() => setShowClearConfirm(false)} disabled={clearing} style={css("flex:1; padding:13px; border:1px solid rgba(255,255,255,0.14); border-radius:13px; background:rgba(255,255,255,0.04); color:#a6afc7; font-size:14px; font-weight:700; cursor:pointer;")}>Cancel</button>
+              <button onClick={clearData} disabled={clearing} style={css("flex:1; padding:13px; border:none; border-radius:13px; background:linear-gradient(135deg,#ff6b63,#e0483f); color:#fff; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 12px 26px -10px rgba(255,107,99,0.7);")}>
+                {clearing ? "Clearing…" : "Yes, clear everything"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {activeToast && (
         <div style={css("position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:90; display:flex; align-items:center; gap:11px; padding:13px 20px; background:rgba(20,24,38,0.92); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(124,140,255,0.4); box-shadow:0 20px 50px -18px rgba(0,0,0,0.9); border-radius:14px; animation:popin .22s ease;")}>
           <span style={css("width:9px; height:9px; border-radius:50%; background:#34d399; box-shadow:0 0 10px rgba(52,211,153,0.8);")} />
@@ -883,6 +917,27 @@ export default function LookAheadApp() {
 
         <div style={css("margin-top:18px; padding:16px 20px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); font-size:13px; color:#a6afc7; font-weight:500; line-height:1.55;")}>
           <b style={css("color:#c3cbe0;")}>Tip —</b> re-importing a progress file updates % complete and actual dates on existing activities; it never creates duplicates. The baseline defines the activity list and planned dates.
+        </div>
+
+        <div style={css("margin-top:18px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:18px 22px; border-radius:16px; background:rgba(255,107,99,0.06); border:1px solid rgba(255,107,99,0.22);")}>
+          <div style={css("flex:1; min-width:220px;")}>
+            <div style={css("font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px; color:#f2f4fb;")}>Clear all data</div>
+            <div style={css("font-size:13px; color:#a6afc7; font-weight:500; margin-top:3px;")}>
+              Permanently removes all {vm.A.length} activities and every constraint, so you can start a fresh import. This can&apos;t be undone.
+            </div>
+          </div>
+          <button
+            onClick={() => setShowClearConfirm(true)}
+            disabled={vm.A.length === 0 && vm.C.length === 0}
+            style={css(
+              "padding:12px 20px; border-radius:13px; font-size:14px; font-weight:700; white-space:nowrap; " +
+                (vm.A.length === 0 && vm.C.length === 0
+                  ? "border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#5b657e; cursor:not-allowed;"
+                  : "border:1px solid rgba(255,107,99,0.45); background:rgba(255,107,99,0.14); color:#ff9089; cursor:pointer;")
+            )}
+          >
+            Clear all data
+          </button>
         </div>
       </div>
     );

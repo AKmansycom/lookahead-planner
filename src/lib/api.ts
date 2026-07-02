@@ -65,3 +65,7 @@ export async function importFile(kind: "baseline" | "progress", file: File): Pro
   form.append("file", file);
   return json(await fetch(`/api/import/${kind}`, { method: "POST", body: form }));
 }
+
+export async function clearAllData(): Promise<{ deletedActivities: number; deletedConstraints: number }> {
+  return json(await fetch("/api/data", { method: "DELETE" }));
+}
