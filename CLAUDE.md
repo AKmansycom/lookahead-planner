@@ -94,7 +94,15 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Working style:** Building iteratively — business logic and data model first, then backend, then frontend.
 
-**Status:** Backend is built and verified end-to-end against the real sample files (Prisma schema migrated, both imports tested via the running dev server, activity/constraint updates and dashboard KPIs all confirmed correct, baseline-re-import-preserves-manual-edits guarantee confirmed). Next: frontend design via Claude Artifacts, then implementation here.
+**Status:** Backend + frontend are both built, integrated, and verified end-to-end against live Supabase data. The Claude Design mockup (`docs/frontend-design-prompt.md` → `LookAhead.dc.html`) was translated into real React components wired to the live API. All four screens (Dashboard, Activities, Constraints, Import) + the add-constraint modal + toast render correctly with real data and working mutations (verified via headless-browser screenshots). Next: documentation deliverables (architecture diagram, ER diagram, setup guide, assumptions) and deployment to Vercel.
+
+**Frontend architecture:** Single client component `src/components/LookAheadApp.tsx` (rendered by `src/app/page.tsx`) holds all state, fetches from the API on mount, and renders the four state-switched screens (no routing — nav toggles `screen` state). Supporting libs: `src/lib/api.ts` (fetch wrappers), `src/lib/types.ts` (shared types + constants + status helpers), `src/lib/format.ts` (date/label helpers), `src/lib/derive.ts` (client-side mirror of the look-ahead rules for instant badge updates), `src/lib/style.ts` (`css()` parses the design's inline-CSS strings into React style objects), `src/components/HoverCard.tsx` (the design's `style` + `style-hover` pattern). Fonts (Manrope, Space Grotesk) loaded via `@import` in `globals.css`; the design's global CSS (range inputs, scrollbars, keyframes) also lives there. Progress slider + engineer field commit is debounced/on-blur; other edits PATCH immediately.
+
+**Design-vs-backend reconciliation (added during integration):**
+- `varianceReason` column added to Activity (nullable) — powers the design's "Why is it late?" dropdown on delayed rows (a Last Planner System variance-reason concept). Document as an assumption; not in the original assignment field list.
+- `PATCH /api/activities/:id` extended to also accept `actualStart`, `actualFinish`, `varianceReason`, and to keep `status` in sync with `progressPercent` (>=100 COMPLETED, >0 IN_PROGRESS, else NOT_STARTED) so manual progress edits update the status badge.
+- Constraint IDs are integers server-side; the UI displays them as `C-00N`.
+- Blocked/Ready activity badges are derived client-side by joining open constraints to activities (no backend change).
 
 **Infra:** Supabase project "lookahead-planner" (region ap-northeast-1/Tokyo), org "arjun.khanna@mansycom.com's Org", project ref `fsyieeocenwsmiptllfj`. Connecting via the session-mode pooler host (`aws-0-ap-northeast-1.pooler.supabase.com:5432`), not the transaction-mode pooler (6543) — the transaction pooler isn't safe for Prisma's new driver-adapter client (`@prisma/adapter-pg`), which uses prepared statements. `DATABASE_URL` lives in the git-ignored `.env`.
 
