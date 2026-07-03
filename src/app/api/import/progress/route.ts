@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseActivityWorkbook } from "@/lib/excel-import";
 import { importProgressUpdate } from "@/lib/import";
 
+// Importing hundreds of rows through a connection-pool-limited client takes
+// longer than Vercel's default function timeout.
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const file = formData.get("file");
